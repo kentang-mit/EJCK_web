@@ -12,6 +12,7 @@ CORS(app, supports_credentials=True)
 app.debug = True
 app.secret_key = 'development'
 oauth = OAuth(app)
+backend_ip = 'http://101.132.153.104:88'
 
 sjtu = oauth.remote_app(
     'sjtu',
@@ -40,7 +41,7 @@ def index():
     if 'token' in session:
         me = sjtu.get('https://api.sjtu.edu.cn/v1/me/profile')
         data = jsonify(me.data)
-        response = make_response(redirect('http://101.132.153.104'))
+        response = make_response(redirect(backend_ip))
         response.set_cookie('data', data)
         return response
     return redirect(url_for('login'))
@@ -72,7 +73,7 @@ def authorized():
     me = sjtu.get('https://api.sjtu.edu.cn/v1/me/profile')
     #data = jsonify(me.data)
     data = me.data
-    response = make_response(redirect('http://101.132.153.104'))
+    response = make_response(redirect(backend_ip))
     curname = data['entities'][0]['name']
     curname_array = bytes(curname, encoding='utf8')
     curname_encoded = base64.b64encode(curname_array)

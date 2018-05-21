@@ -99,7 +99,7 @@ export default {
         class: this.form.class
       };
       this.$cookies.set("class",submitted.class);
-      ajax.ajaxPost('http://47.100.46.117:8888/api/update_student_information',submitted);
+      ajax.ajaxPost('http://101.132.153.104:8888/api/update_student_information',submitted);
       evt.preventDefault();
       alert(JSON.stringify(this.form));
     },

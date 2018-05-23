@@ -88,7 +88,7 @@ export default {
       this.class = this.$cookies.get("class");
     },
     getClassBooks(){
-      ajax.ajaxGetWithParam('http://101.132.153.104:8888/api/get_class_books', {params:{'class':this.class}}, res=>{
+      ajax.ajaxGetWithParam('http://localhost:88/api/get_class_books', {params:{'class':this.class}}, res=>{
         this.items = res.data;
         this.nums = res.data.map(x=>x.num);
       });

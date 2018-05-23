@@ -18,5 +18,10 @@ const routes = [{
     path: '/teacher',
     component: (resolve) => require(['./views/TeacherHome.vue'], resolve)
     },
+
+    {
+    path: '/confirmlist',
+    component: (resolve) => require(['./views/ConfirmList.vue'], resolve)
+    },
 ];
 export default routes;

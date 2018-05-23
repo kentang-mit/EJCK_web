@@ -12,12 +12,12 @@ CORS(app, supports_credentials=True)
 app.debug = True
 app.secret_key = 'development'
 oauth = OAuth(app)
-backend_ip = 'http://101.132.153.104:88'
+backend_ip = 'http://localhost:88'
 
 sjtu = oauth.remote_app(
     'sjtu',
-    consumer_key='SEE_QQ_GROUP',
-    consumer_secret='SEE_QQ_GROUP',
+    consumer_key='863rEoGllxma33KvSnjP',
+    consumer_secret='1FBFC8AE7091FB38082F7C7A0DA83743FD103875791A4989',
     request_token_params={'scope': ['essential','lessons']},
     base_url='https://jaccount.sjtu.edu.cn/',
     request_token_url=None,
@@ -166,6 +166,7 @@ def get_student_books():
     'b.id=ba.bookid and b.id=cb.bookid and c.bsid=cb.courseid ' +\
     'GROUP BY b.id,c.name;'
     cursor.execute(sql)
+
     dic = cursor.fetchall()
     for i in range(len(dic)):
         dic[i]['price'] = str(dic[i]['price'])

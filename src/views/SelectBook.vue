@@ -5,43 +5,63 @@
     <body>
     <h1 align="left">个人选书</h1>
     <hr>
-    {{name}}同学（学号：{{stuId}}），欢迎选书！
-    <!--
-    <b-btn v-b-popover.hover="'I am popover content!'" title="Popover Title">aaa</b-btn>
-    -->
-    <b-table striped hover :items="items" :fields="fields">
-      <template slot="show_details" slot-scope="row">
-        <b-button size="sm" @click.stop="row.toggleDetails" class="mr-2" variant="info">
-          {{ row.detailsShowing ? '隐藏' : '展示' }}信息
-        </b-button>
-      </template>
+    <div v-if="stuId=='' || stuId == undefined">
+      <b-alert show variant="warning">你在开玩笑吗？你还没有登陆！！！</b-alert>
+      <hr>
+      jAccount入口：<b-button @click="getUserInformation" variant="primary">点击登陆</b-button>
 
-      <template slot="row-details" slot-scope="row">
-        <b-card>
-          <b-row class="mb-2">
-            <b-col sm="3" class="text-sm-right"><b>全部作者:</b></b-col>
-            <b-col>{{ row.item.authors }}</b-col>
-          </b-row>
-          <b-row class="mb-2">
-            <b-col sm="3" class="text-sm-right"><b>其他描述:</b></b-col>
-            <b-col>{{ row.item.detailInformation }}</b-col>
-          </b-row>        
-        </b-card>
-      </template>
-      <template slot="action" slot-scope="row">
-        <b-form-input size="sm" v-model="nums[row.index]"
-          type="text"
-          placeholder="0"
-          style="width:45px"></b-form-input>
-      </template>
-    </b-table>
-    <p align="right">
-    <b-button @click="submitBookInformation">提交书单</b-button>
-    <b-button variant="warning">暂存书单</b-button>
-    </p>
+    </div>
+    <div v-else>
+      <b-alert show variant="success">{{name}}同学（学号：{{stuId}}），欢迎选书！</b-alert>
+      <!--
+      <b-btn v-b-popover.hover="'I am popover content!'" title="Popover Title">aaa</b-btn>
+      -->
+      <b-table striped hover :items="items" :fields="fields">
+        <template slot="show_details" slot-scope="row">
+          <b-button size="sm" @click.stop="row.toggleDetails" class="mr-2" variant="info">
+            {{ row.detailsShowing ? '隐藏' : '展示' }}信息
+          </b-button>
+        </template>
+
+        <template slot="row-details" slot-scope="row">
+          <b-card>
+            <b-row class="mb-2">
+              <b-col sm="3" class="text-sm-right"><b>全部作者:</b></b-col>
+              <b-col>{{ row.item.authors }}</b-col>
+            </b-row>
+            <b-row class="mb-2">
+              <b-col sm="3" class="text-sm-right"><b>其他描述:</b></b-col>
+              <b-col>{{ row.item.detailInformation }}</b-col>
+            </b-row>        
+          </b-card>
+        </template>
+        <template slot="action" slot-scope="row">
+          <b-form-input size="sm" v-model="nums[row.index]"
+            type="text"
+            placeholder="0"
+            style="width:45px"></b-form-input>
+        </template>
+      </b-table>
+      <p align="right">
+      <b-button v-b-modal="'submitBook'" @click="submitBookInformation">提交书单</b-button>
+      <b-button v-b-modal="'cache'" variant="warning">暂存书单</b-button>
+      </p>
+		<b-modal id="submitBook" hide-footer title="提交信息">
+		<div class="d-block text-center">
+		提交成功!
+		</div>
+		</b-modal>
+
+		<b-modal id="cache" hide-footer title="提交信息">
+		<div class="d-block text-center">
+		暂存成功!
+		</div>
+		</b-modal>
+    </div>
     </body>
   </div>
 </div>
+
 </template>
 
 <script>
@@ -74,6 +94,9 @@ export default {
     this.fetchBookInformation();
   },
   methods:{
+    getUserInformation(){
+      window.location.href='/api';
+    },
     showCookie(){
       //console.log(this.$cookies.keys());
       this.stuId = this.$cookies.get("stuId");

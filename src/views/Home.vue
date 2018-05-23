@@ -8,8 +8,10 @@
   	<b-card>
 	  <li v-if="stuId=='' || stuId == undefined">登陆系统后请完善个人信息～</li>
 	  <li v-if="stuId=='' || stuId == undefined">jAccount入口：<b-button @click="getUserInformation" variant="primary">点击登陆</b-button></li>
-    <li v-else>欢迎回来，{{name}}(学号：{{stuId}}）同学！</li>
-	</b-card>
+    <div v-else>
+      <b-alert show variant="success">欢迎回来，{{name}}(学号：{{stuId}}）同学！</b-alert>
+    </div>
+    </b-card>
   	</body>
   </div>
   </div>

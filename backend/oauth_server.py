@@ -12,7 +12,9 @@ CORS(app, supports_credentials=True)
 app.debug = True
 app.secret_key = 'development'
 oauth = OAuth(app)
-backend_ip = 'http://101.132.153.104:88'
+
+#backend_ip = 'http://101.132.153.104:88'
+backend_ip = 'http://0.0.0.0:88'  #local test
 
 sjtu = oauth.remote_app(
     'sjtu',
@@ -80,12 +82,19 @@ def authorized():
     curcode = data['entities'][0]['code']
     curacademy = data['entities'][0]['organize']['id']
     curJAccount = data['entities'][0]['account']
+    curType = data['entities'][0]['userType']
     sql = 'INSERT IGNORE INTO Student(stuId, jAccount, name, schoolid) values(%s,%s,%s,%s)'    
     cursor.execute(sql,(curcode, curJAccount, curname, curacademy))
     dbObject.commit()
     response.set_cookie('name', curname_encoded)
-    response.set_cookie('stuId', curcode)
     response.set_cookie('academy', curacademy)
+    if curType == 'student':
+        response.set_cookie('stuId', curcode)
+        response.set_cookie('teacherId', '*')
+    else:
+        response.set_cookie('stuId', '*')
+        response.set_cookie('teacherId', curcode)
+
     
     #response = make_response(jsonify(data))
     #response.set_cookie('name',data['entities'][0]['name'])
@@ -239,20 +248,26 @@ def save_student_books():
     sql = 'SELECT * from StudentBook where studentid=%s'
     cursor.execute(sql, data[0]['stuId'])
     dic = cursor.fetchone()
+
     if dic is not None:
         sql = 'DELETE from StudentBook where studentid=%s'
         cursor.execute(sql, data[0]['stuId'])
         dbObject.commit()
+    
+    f=open('log.txt','w')
+    f.write(str(data))
+    f.close()
     sql = 'INSERT INTO StudentBook(bookid,studentid,num,classid) values'
     tup = []
     for x in data:
         sql += '(%s,%s,%s,%s),'
         tup.append(x['bookid'])
         tup.append(x['stuId'])
-        tup.append(x['num'])
+        tup.append(x.get('num',0))
         tup.append(x['class'])
     sql = sql[:-1]
     tup = tuple(tup)
+
     cursor.execute(sql, tup)
     dbObject.commit()
     return jsonify({'code':200,'message':'success'})

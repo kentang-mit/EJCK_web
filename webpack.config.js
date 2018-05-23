@@ -1,3 +1,5 @@
+// import ip from 'ip'
+var ip = 'http://0.0.0.0'
 var path = require('path')
 var webpack = require('webpack')
 const ExtractTextPlugin = require("extract-text-webpack-plugin")
@@ -51,7 +53,7 @@ module.exports = {
     noInfo: true,
     proxy: {
       '/api': {
-	target: 'http://101.132.153.104:8888',
+	target: ip+':8888',
 	secure: false,
 	changeOrigin: true,
 	

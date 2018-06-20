@@ -181,6 +181,13 @@ def get_student_books():
         dic[i]['author'] = dic[i]['authors'].split(',')[0]
     return jsonify(dic)
 
+@app.route('/api/get_notification')
+def get_notification():
+    sql = 'SELECT title,Content From Notification' +\
+    cursor.execute(sql)
+    dic = cursor.fetchall()
+    return jsonify(dic)
+
 @app.route('/api/get_class_books')
 def get_class_books():
     curclassId = request.args.get('class')

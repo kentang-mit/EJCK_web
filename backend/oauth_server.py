@@ -183,7 +183,7 @@ def get_student_books():
 
 @app.route('/api/get_notification')
 def get_notification():
-    sql = 'SELECT title,Content From Notification' +\
+    sql = 'SELECT title,Content From Notification'
     cursor.execute(sql)
     dic = cursor.fetchall()
     return jsonify(dic)

@@ -1,5 +1,5 @@
 // import ip from 'ip'
-var ip = 'http://0.0.0.0'
+var ip = 'http://101.132.153.104'
 var path = require('path')
 var webpack = require('webpack')
 const ExtractTextPlugin = require("extract-text-webpack-plugin")

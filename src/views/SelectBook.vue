@@ -79,11 +79,8 @@ export default {
               {key:'show_details',label:'详细信息'},
               {key:'action',label:'数量'}],
       
-      items:  [
-        //{ name: '信号与系统', author: '奥本海姆', authors: 'Alan V. Oppenheim, S.Wilsky',publisher: '机械工业出版社', price: '99', detailInformation:'Hello world.' },
-        //{ name: '计算机组成', author: '戴维·帕特森', authors: 'David Patterson, John Hennesey',publisher: '电子工业出版社', price: '80', detailInformation:'Hello world.' }
-      ],
-      nums: [1,2],
+      items:  [],
+      nums: [],
       stuId: '',
       name: '',
       class: ''
@@ -105,9 +102,12 @@ export default {
       this.class = this.$cookies.get("class");
     },
     fetchBookInformation(){
-      ajax.ajaxGet('/api/get_student_books', res=>{
+      ajax.ajaxGetWithParam('/api/get_student_books', {params:{'stuId':this.stuId}}, res=>{
         this.items = res.data;
-      });
+        for(var i = 0; i < this.items.length; i++){
+          this.nums.push(this.items[i]['num']);
+        }
+      });    
     },
     submitBookInformation(){
       var books = this.items.map(x=>{return {bookid:x.bid};});

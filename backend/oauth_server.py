@@ -13,13 +13,13 @@ app.debug = True
 app.secret_key = 'development'
 oauth = OAuth(app)
 
-#backend_ip = 'http://101.132.153.104:88'
-backend_ip = 'http://0.0.0.0:88'  #local test
+backend_ip = 'http://101.132.153.104:88'
+#backend_ip = 'http://0.0.0.0:88'  #local test
 
 sjtu = oauth.remote_app(
     'sjtu',
-    consumer_key='SEE_QQ_GROUP',
-    consumer_secret='SEE_QQ_GROUP',
+    consumer_key='',
+    consumer_secret='',
     request_token_params={'scope': ['essential','lessons']},
     base_url='https://jaccount.sjtu.edu.cn/',
     request_token_url=None,
@@ -164,22 +164,58 @@ def teacher_authorized():
         dbObject.commit()
     return str(data)
 
-@app.route('/api/get_student_books')
-def get_student_books():
-    sql = 'SELECT b.id as bid, b.name, b.edition, b.publisher, c.name as course, b.price, b.detailInformation, ' +\
-    'GROUP_CONCAT(ba.author) as authors ' +\
-    'from Book as b ' +\
-    'JOIN BookAuthor as ba ' +\
-    'JOIN CourseBook as cb ' +\
-    'JOIN Course as c on ' +\
-    'b.id=ba.bookid and b.id=cb.bookid and c.bsid=cb.courseid ' +\
-    'GROUP BY b.id,c.name;'
+@app.route('/api/get_classes')
+def get_classes():
+    sql = 'SELECT name from Class'
     cursor.execute(sql)
     dic = cursor.fetchall()
-    for i in range(len(dic)):
-        dic[i]['price'] = str(dic[i]['price'])
-        dic[i]['author'] = dic[i]['authors'].split(',')[0]
+    dic = list(map(lambda x: {'id':x['name']}, dic))
     return jsonify(dic)
+
+@app.route('/api/get_student_books')
+def get_student_books():
+    curStuId = request.args.get('stuId')
+    sql = 'SELECT bc.bookid from BookClass as bc JOIN Student as s WHERE bc.classid=s.classid AND s.stuid=%s;'
+    cursor.execute(sql,curStuId)
+    dic = cursor.fetchall()
+
+    sql = 'SELECT bookid,num from StudentBook WHERE studentid=%s'
+    cursor.execute(sql,curStuId)
+    num_dic_ = cursor.fetchall()
+    num_dic = {}
+    for x in num_dic_:
+        num_dic[x['bookid']] = x['num']
+
+    sql = 'SELECT b.id as bid, b.name, b.edition, b.publisher, c.name as course, b.price, b.detailInformation,'+\
+    'GROUP_CONCAT(ba.author) as authors '+\
+    'from Book as b '+\
+    'JOIN BookAuthor as ba '+\
+    'JOIN CourseBook as cb '+\
+    'JOIN Course as c on b.id=ba.bookid '+\
+    'and b.id=cb.bookid and c.bsid=cb.courseid '+\
+    'WHERE b.id in ('
+    tup_bid = []
+    for x in dic:
+        sql += '%s,'
+        tup_bid.append(x['bookid'])
+
+    sql = sql[:-1]
+    sql += ') GROUP BY bid,c.name;'
+
+    f = open('log.txt','w')
+    f.write(str(num_dic))
+    f.close()
+
+    tup_bid = tuple(tup_bid)
+    cursor.execute(sql, tup_bid)
+
+    inf_dic = cursor.fetchall()
+    for i in range(len(inf_dic)):
+        inf_dic[i]['price'] = str(inf_dic[i]['price'])
+        inf_dic[i]['author'] = inf_dic[i]['authors'].split(',')[0]
+        inf_dic[i]['num'] = int(num_dic.get(inf_dic[i]['bid'],0))
+    
+    return jsonify(inf_dic)
 
 @app.route('/api/get_notification')
 def get_notification():
@@ -191,7 +227,7 @@ def get_notification():
 @app.route('/api/get_class_books')
 def get_class_books():
     curclassId = request.args.get('class')
-    sql = 'SELECT bookid, SUM(num) as num from StudentBook WHERE classid=%s GROUP BY bookid;'
+    sql = 'SELECT bookid, num from BookClass WHERE classid=%s;'
 
     #f = open('log.txt','w')
     #f.write(str(request.data))
@@ -231,6 +267,70 @@ def get_class_books():
         inf_dic[i]['num'] = int(dic[i]['num'])
     return jsonify(inf_dic)
 
+@app.route('/api/save_class_books', methods=['POST'])
+def save_class_books():
+    data = json.loads(str(request.data,'utf8'))
+    #f = open('log.txt','w')
+    #f.write(str(data))
+    #f.close()
+    if len(data) == 0:
+        return jsonify({'code':200})
+
+    sql = 'DELETE from BookClass where classid=%s'
+    cursor.execute(sql, data[0]['class'])
+    dbObject.commit()
+
+    sql = 'INSERT INTO BookClass(classid,bookid) VALUES'
+    tup = []
+    for x in data:
+        sql += '(%s,%s),'
+        tup.append(x['class'])
+        tup.append(x['bookid'])
+    tup = tuple(tup)
+    sql = sql[:-1]
+    cursor.execute(sql, tup)
+    dbObject.commit()
+    return jsonify({'code':'200'})
+
+@app.route('/api/get_class_candidate_books')
+def get_class_candidate_books():
+    curclassId = request.args.get('class')
+    sql = 'SELECT cb.bookid from ClassCourse as cc JOIN CourseBook as cb on cc.courseid=cb.courseid WHERE cc.classid=%s;'
+
+    #f = open('log.txt','w')
+    #f.write(str(request.data))
+    #f.close()
+
+    cursor.execute(sql,curclassId)
+    dic = cursor.fetchall()
+    if len(dic) == 0:
+        return jsonify([])
+
+    sql = 'SELECT b.id as bid, b.name, b.edition, b.publisher, c.name as course, b.price, b.detailInformation,'+\
+    'GROUP_CONCAT(ba.author) as authors '+\
+    'from Book as b '+\
+    'JOIN BookAuthor as ba '+\
+    'JOIN CourseBook as cb '+\
+    'JOIN Course as c on b.id=ba.bookid '+\
+    'and b.id=cb.bookid and c.bsid=cb.courseid '+\
+    'WHERE b.id in ('
+    tup_bid = []
+    for x in dic:
+        sql += '%s,'
+        tup_bid.append(x['bookid'])
+    sql = sql[:-1]
+    sql += ') GROUP BY bid,c.name;'
+
+    tup_bid = tuple(tup_bid)
+
+    cursor.execute(sql, tup_bid)
+    inf_dic = cursor.fetchall()
+    for i in range(len(inf_dic)):
+        inf_dic[i]['price'] = str(inf_dic[i]['price'])
+        inf_dic[i]['author'] = inf_dic[i]['authors'].split(',')[0]
+    return jsonify(inf_dic)
+
+
 @app.route('/api/update_student_information',methods=['POST'])
 def update_student_information():
     data = json.loads(str(request.data,'utf8'))
@@ -254,15 +354,19 @@ def save_student_books():
         return
     sql = 'SELECT * from StudentBook where studentid=%s'
     cursor.execute(sql, data[0]['stuId'])
-    dic = cursor.fetchone()
+    dic = cursor.fetchall()
 
-    if dic is not None:
+    if len(dic) > 0:
         sql = 'DELETE from StudentBook where studentid=%s'
         cursor.execute(sql, data[0]['stuId'])
         dbObject.commit()
     
+    num_dic = {}
+    for x in dic:
+        num_dic[x['bookid']] = x['num']
+
     f=open('log.txt','w')
-    f.write(str(data))
+    f.write(str(num_dic))
     f.close()
     sql = 'INSERT INTO StudentBook(bookid,studentid,num,classid) values'
     tup = []
@@ -277,6 +381,15 @@ def save_student_books():
 
     cursor.execute(sql, tup)
     dbObject.commit()
+
+
+    for i in range(len(data)):
+        sql = 'UPDATE BookClass SET num=num+%s WHERE bookid=%s'
+        delta = int(data[i].get('num',0)) - num_dic.get(data[i]['bookid'],0)
+        bookid = data[i]['bookid']
+        cursor.execute(sql,(delta,bookid))
+        dbObject.commit()
+
     return jsonify({'code':200,'message':'success'})
 
 @app.route('/api/save_course_books', methods=['POST'])
@@ -379,5 +492,42 @@ def get_teacher_information():
     f.write(str(dic))
     f.close()
     return jsonify(dic)
+
+@app.route('/api/get_queue')
+def get_queue():
+    curClass = request.args.get('class')
+    sql = 'SELECT id from BookQueue WHERE classid=%s'
+    cursor.execute(sql, curClass)
+    dic = cursor.fetchone()
+    
+    curId = dic.get('id',1)
+    sql = 'SELECT classid from BookQueue WHERE id < %s'
+    cursor.execute(sql, curId)
+    dic = cursor.fetchall()
+    dic = list(map(lambda x:x['classid'],dic))
+    ret = {'classes': dic, 'num': len(dic)+1}
+    return jsonify(ret)
+
+@app.route('/api/push_queue', methods=['POST'])
+def push_queue():
+    data = json.loads(str(request.data,'utf8'))
+    curClass = data['class']
+    #curClass = request.args.get('class')
+    sql = 'INSERT INTO BookQueue(`classid`) values(%s)'
+    cursor.execute(sql, curClass)
+    dbObject.commit()
+    return jsonify({'code':200})
+
+@app.route('/api/pop_queue', methods=['POST'])
+def pop_queue():
+    sql = 'SELECT * from BookQueue ORDER BY id'
+    cursor.execute(sql)
+    dic = cursor.fetchone()
+    curId = dic['id']
+    sql = 'DELETE from BookQueue where id=%s'
+    cursor.execute(sql, curId)
+    dbObject.commit()
+    return jsonify(dic)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0',port=8888)

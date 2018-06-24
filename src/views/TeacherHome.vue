@@ -11,7 +11,7 @@
       jAccount入口：<b-button @click="getUserInformation" variant="primary">点击登陆</b-button>
 
     </div>
-    <div v-else-if="stuId!='515030910551'">
+    <div v-else-if="stuId!='516030910534' && (teacherId == '*')">
       <b-alert show variant="danger">你根本不是老师！！！</b-alert>
     </div>
     <div v-else>
@@ -184,7 +184,7 @@ export default {
         //{name:'电路与电子学', bsid:'1', code:'EI234', books:[]},
         //{name:'计算机组成', bsid:'2', code:'EI332', books:[]}
       ],
-      nums: [1,2],
+      nums: [0,0],
       teacherId: '',
       stuId: '',
       name: '',
